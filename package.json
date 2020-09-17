@@ -1,0 +1,14 @@
+{
+  "name": "@gm5/jwt",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "JSON WEB TOKEN",
+  "main": "index.js",
+  "author": "yutent",
+  "keywords": ["fivejs", "jwt", "http"],
+  "repository": "https://github.com/bytedo/gmf.jwt.git",
+  "license": "MIT",
+  "dependencies": {
+    "crypto.js": "^2.0.1"
+  }
+}
