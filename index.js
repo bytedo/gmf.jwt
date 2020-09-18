@@ -12,11 +12,9 @@ function hmac(str, secret) {
   return base64encode(buf, true)
 }
 
-export default class Jwt {
-  constructor(expires, secret) {
-    this.expires = expires
-    this.secret = secret
-  }
+export default {
+  expires: 7 * 24 * 3600,
+  secret: 'this is secret key',
 
   // 签名, 返回token
   sign(data) {
@@ -34,11 +32,10 @@ export default class Jwt {
     auth_str = hmac(`${header}.${payload}`, secret)
 
     return [header, payload, auth_str].join('.')
-  }
+  },
 
   // 校验token
-  verify(token) {
-    var { secret } = this
+  verify(token = '') {
     var jwt = token.split('.')
     var auth_str, payload
 
@@ -53,7 +50,7 @@ export default class Jwt {
       return 'expired'
     }
 
-    if (hmac(jwt.join('.'), secret) === auth_str) {
+    if (hmac(jwt.join('.'), this.secret) === auth_str) {
       return payload.data
     }
 

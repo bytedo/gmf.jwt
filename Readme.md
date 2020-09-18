@@ -1,12 +1,12 @@
-![module info](https://nodei.co/npm/@gm5/controller.png?downloads=true&downloadRank=true&stars=true)
+![module info](https://nodei.co/npm/@gm5/jwt.png?downloads=true&downloadRank=true&stars=true)
 
-# @gm5/controller
+# @gm5/jwt
 
-> 控制器基类。
+> json web token。
 
 ## 安装
 
 ```bash
-npm install @gm5/controller
+npm install @gm5/jwt
 ```
 

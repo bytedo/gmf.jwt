@@ -2,7 +2,7 @@
   "name": "@gm5/jwt",
   "version": "1.0.0",
   "type": "module",
-  "description": "JSON WEB TOKEN",
+  "description": "json web token",
   "main": "index.js",
   "author": "yutent",
   "keywords": ["fivejs", "jwt", "http"],
