@@ -10,3 +10,14 @@
 npm install @gm5/jwt
 ```
 
+## 使用
+
+```js
+
+import Five from '@gm5/code'
+import jwt from '@gm5/jwt'
+
+var app = new Five()
+app.install(jwt)
+
+```
