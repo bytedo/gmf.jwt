@@ -16,7 +16,7 @@ export default {
   name: 'jwt',
   install() {
     var expires = this.get('session').ttl
-    var secret = this.get('jwt')
+    var secret = this.get('jwt') || 'it_is_secret_key'
 
     return {
       // 签名, 返回token
