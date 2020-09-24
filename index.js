@@ -16,46 +16,50 @@ export default {
   name: 'jwt',
   install() {
     var expires = this.get('session').ttl
-    var secret = this.get('jwt') || 'it_is_secret_key'
+    var opened = this.get('jwt')
 
     return {
       // 签名, 返回token
-      sign(data) {
-        // header: base64("{"typ":"JWT","alg":"HS256"}")
-        // 这里固定使用sha256,
-        var header = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
-        // 加入过期时间, 同session.ttl
-        var payload = { data, expires: Date.now() + expires * 1000 }
-        var auth_str = ''
+      sign(data, secret = 'it_is_secret_key') {
+        if (opened) {
+          // header: base64("{"typ":"JWT","alg":"HS256"}")
+          // 这里固定使用sha256,
+          var header = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
+          // 加入过期时间, 同session.ttl
+          var payload = { data, expires: Date.now() + expires * 1000 }
+          var auth_str = ''
 
-        payload = JSON.stringify(payload)
-        payload = base64encode(payload, true)
-        auth_str = hmac(`${header}.${payload}`, secret)
+          payload = JSON.stringify(payload)
+          payload = base64encode(payload, true)
+          auth_str = hmac(`${header}.${payload}`, secret)
 
-        return [header, payload, auth_str].join('.')
+          return [header, payload, auth_str].join('.')
+        }
       },
 
       // 校验token
-      verify(token = '') {
-        var jwt = token.split('.')
-        var auth_str, payload
+      verify(token = '', secret = 'it_is_secret_key') {
+        if (opened) {
+          var jwt = token.split('.')
+          var auth_str, payload
 
-        if (jwt.length !== 3) {
+          if (jwt.length !== 3) {
+            return false
+          }
+          auth_str = jwt.pop()
+          payload = JSON.parse(base64decode(jwt[1], true))
+
+          // 如果已经过期, 则不再校验hash
+          if (payload.expires < Date.now()) {
+            return false
+          }
+
+          if (hmac(jwt.join('.'), secret) === auth_str) {
+            return payload.data
+          }
+
           return false
         }
-        auth_str = jwt.pop()
-        payload = JSON.parse(base64decode(jwt[1], true))
-
-        // 如果已经过期, 则不再校验hash
-        if (payload.expires < Date.now()) {
-          return 'expired'
-        }
-
-        if (hmac(jwt.join('.'), secret) === auth_str) {
-          return payload.data
-        }
-
-        return false
       }
     }
   }
