@@ -5,62 +5,85 @@
  */
 
 import crypto from 'crypto.js'
-import { base64encode, base64decode } from 'crypto.js'
+import { base64encode, base64decode, sha1 } from 'crypto.js'
 
 function hmac(str, secret) {
   var buf = crypto.hmac('sha256', str, secret, 'buffer')
   return base64encode(buf, true)
 }
 
-export default {
+export const jwtPackage = {
   name: 'jwt',
   install() {
-    var expires = this.get('session').ttl
-    var opened = this.get('jwt')
-
     return {
       // 签名, 返回token
-      sign(data, secret = 'it_is_secret_key') {
-        if (opened) {
-          // header: base64("{"typ":"JWT","alg":"HS256"}")
-          // 这里固定使用sha256,
-          var header = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
-          // 加入过期时间, 同session.ttl
-          var payload = { data, expires: Date.now() + expires * 1000 }
-          var auth_str = ''
+      sign(data, secret, ttl) {
+        // header: base64("{"typ":"JWT","alg":"HS256"}")
+        // 这里固定使用sha256,
+        var header = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
 
-          payload = JSON.stringify(payload)
-          payload = base64encode(payload, true)
-          auth_str = hmac(`${header}.${payload}`, secret)
+        // 加入过期时间,
+        var payload = { data, expires: Date.now() + ttl * 1000 }
+        var auth_str = ''
 
-          return [header, payload, auth_str].join('.')
-        }
+        payload = JSON.stringify(payload)
+        payload = base64encode(payload, true)
+        auth_str = hmac(`${header}.${payload}`, secret)
+
+        return [header, payload, auth_str].join('.')
       },
 
       // 校验token
-      verify(token = '', secret = 'it_is_secret_key') {
-        if (opened) {
-          var jwt = token.split('.')
-          var auth_str, payload
+      verify(token = '', secret) {
+        var jwt = token.split('.')
+        var auth_str, payload
 
-          if (jwt.length !== 3) {
-            return false
-          }
-          auth_str = jwt.pop()
-          payload = JSON.parse(base64decode(jwt[1], true))
-
-          // 如果已经过期, 则不再校验hash
-          if (payload.expires < Date.now()) {
-            return false
-          }
-
-          if (hmac(jwt.join('.'), secret) === auth_str) {
-            return payload.data
-          }
-
+        if (jwt.length !== 3) {
           return false
         }
+        auth_str = jwt.pop()
+        payload = JSON.parse(base64decode(jwt[1], true))
+
+        // 如果已经过期, 则不再校验hash
+        if (payload.expires < Date.now()) {
+          return false
+        }
+
+        if (hmac(jwt.join('.'), secret) === auth_str) {
+          return payload.data
+        }
+
+        return false
       }
     }
   }
+}
+
+export function jwtConnect(req, res, next) {
+  var { secret, level, ttl } = this.get('jwt')
+  var deviceID = ''
+  var ssid
+
+  // options请求不处理jwt
+  if (req.method === 'OPTIONS') {
+    return next()
+  }
+
+  // 校验UA
+  if (level & 2) {
+    deviceID += req.header('user-agent')
+  }
+
+  // 校验IP
+  if (level & 4) {
+    deviceID += req.ip()
+  }
+
+  if (deviceID) {
+    deviceID = sha1(deviceID)
+  }
+
+  req.mixKey = secret + deviceID
+
+  next()
 }
