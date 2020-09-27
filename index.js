@@ -60,7 +60,7 @@ export const jwtPackage = {
 }
 
 export function jwtConnect(req, res, next) {
-  var { secret, level, ttl } = this.get('jwt')
+  var { secret, level } = this.get('jwt')
   var deviceID = ''
   var ssid
 
